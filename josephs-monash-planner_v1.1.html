@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Joseph's Monash University Indonesia — Project Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1a1a18;--ink2:#5a5a54;--ink3:#9a9a90;
+  --paper:#faf9f6;--surface:#f2f0eb;--surface2:#e8e5de;
+  --border:rgba(26,26,24,0.1);--border2:rgba(26,26,24,0.18);
+  --radius:8px;--radius-lg:14px;
+  --shadow:0 2px 12px rgba(26,26,24,0.08);
+  --research-bg:#ddeaf5;--research-bar:#3a5f8a;--research-fill:#a8c6e8;--research-text:#185fa5;
+  --teaching-bg:#dff0e5;--teaching-bar:#4a7c59;--teaching-fill:#a8d4b5;--teaching-text:#3b6d11;
+  --services-bg:#f7eedf;--services-bar:#c17d3c;--services-fill:#e8c99a;--services-text:#8a5010;
+  --accent:#c17d3c;
+  --overdue:#b84040;--overdue-bg:#f5e0e0;
+  --due-soon:#7a6020;--due-soon-bg:#fdf3d0;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);font-size:14px;min-height:100vh}
+h1,h2,h3{font-family:'DM Serif Display',serif;font-weight:400}
+.app{padding:1.5rem 1.25rem;max-width:1100px;margin:0 auto}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem;gap:12px;flex-wrap:wrap}
+.brand h1{font-size:24px;color:var(--ink);line-height:1.1}
+.brand h1 em{font-style:italic;color:var(--ink2)}
+.brand p{font-size:11px;color:var(--ink3);margin-top:4px;letter-spacing:0.05em;text-transform:uppercase}
+.save-indicator{font-size:11px;color:var(--ink3);margin-top:2px;transition:color 0.3s}
+.save-indicator.saved{color:#4a7c59}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{padding:7px 16px;border-radius:var(--radius);border:1.5px solid var(--border2);background:transparent;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;color:var(--ink);transition:all 0.15s;white-space:nowrap}
+.btn:hover{background:var(--surface);border-color:var(--ink)}
+.btn-accent{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-accent:hover{background:#a8692e;border-color:#a8692e}
+.btn-danger{background:transparent;border-color:#b84040;color:#b84040}
+.btn-danger:hover{background:#f5e0e0}
+select{border:1px solid var(--border2);border-radius:var(--radius);padding:6px 10px;font-size:12px;background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif;cursor:pointer}
+.legend{display:flex;gap:16px;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)}
+.legend-dot{width:12px;height:12px;border-radius:3px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+.stat{border-radius:var(--radius-lg);padding:14px 16px;border:1px solid var(--border)}
+.stat-num{font-family:'DM Serif Display',serif;font-size:28px;line-height:1}
+.stat-lbl{font-size:11px;color:var(--ink3);margin-top:3px;letter-spacing:0.03em}
+.stat-bar-wrap{height:3px;border-radius:2px;background:var(--surface2);margin-top:8px;overflow:hidden}
+.stat-bar-fill{height:100%;border-radius:2px}
+.stat-pie{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px 16px}
+.pie-legend{display:flex;flex-direction:column;gap:3px;width:100%}
+.pie-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink2)}
+.pie-legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.pill-group{display:flex;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden;background:var(--surface)}
+.pill{padding:5px 14px;font-size:12px;cursor:pointer;border:none;background:transparent;font-family:'DM Sans',sans-serif;color:var(--ink2);transition:all 0.12s}
+.pill.on{background:var(--ink);color:var(--paper)}
+.gantt-wrap{border:1px solid var(--border2);border-radius:var(--radius-lg);overflow:hidden;background:var(--paper);box-shadow:var(--shadow)}
+.gantt-head{display:flex;background:var(--surface);border-bottom:1px solid var(--border2)}
+.gh-label{width:230px;min-width:230px;padding:10px 16px;font-size:11px;font-weight:500;color:var(--ink3);letter-spacing:0.06em;text-transform:uppercase;border-right:1px solid var(--border)}
+.gh-cols{flex:1;display:flex;overflow:hidden}
+.gh-col{flex:1;padding:10px 4px;font-size:11px;color:var(--ink3);text-align:center;border-right:1px solid var(--border);letter-spacing:0.02em}
+.gh-col:last-child{border-right:none}
+.gh-col.today-col{color:var(--accent);font-weight:500}
+.gantt-body{position:relative}
+.g-row{display:flex;border-bottom:1px solid var(--border);min-height:52px;transition:background 0.1s;cursor:pointer}
+.g-row:last-child{border-bottom:none}
+.g-row:hover{background:rgba(193,125,60,0.05)}
+.g-meta{width:230px;min-width:230px;padding:8px 16px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:3px}
+.g-name{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-sub{font-size:11px;color:var(--ink3);display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.g-cells{flex:1;position:relative;overflow:hidden}
+.g-cell-bg{position:absolute;top:0;bottom:0;border-right:1px solid var(--border);opacity:0.4}
+.today-stripe{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);opacity:0.7;z-index:5}
+.today-cap{position:absolute;top:3px;font-size:9px;color:var(--accent);font-weight:500;letter-spacing:0.05em;transform:translateX(-50%);z-index:6;white-space:nowrap}
+.g-bar{position:absolute;top:50%;transform:translateY(-50%);height:24px;border-radius:6px;cursor:pointer;transition:opacity 0.15s,transform 0.15s;display:flex;align-items:center;padding:0 8px;min-width:6px;z-index:3}
+.g-bar:hover{opacity:0.82;transform:translateY(-50%) scaleY(1.06)}
+.g-bar-fill{position:absolute;left:0;top:0;bottom:0;border-radius:6px;opacity:0.5}
+.g-bar-text{font-size:10px;font-weight:500;white-space:nowrap;overflow:hidden;position:relative;z-index:1}
+.ms-diamond{position:absolute;top:50%;transform:translateY(-50%) rotate(45deg);width:10px;height:10px;border-radius:2px;z-index:4}
+.ms-label{position:absolute;top:2px;font-size:9px;font-weight:500;white-space:nowrap;transform:translateX(-50%);z-index:5}
+.ms-row{display:flex;border-top:1px solid var(--border);min-height:34px;background:var(--surface)}
+.ms-label-cell{width:230px;min-width:230px;padding:8px 16px;border-right:1px solid var(--border);font-size:11px;color:var(--ink3);display:flex;align-items:center;letter-spacing:0.04em;text-transform:uppercase;font-weight:500}
+.empty-state{padding:3rem;text-align:center;color:var(--ink3)}
+.empty-state h3{font-size:18px;margin-bottom:8px;color:var(--ink2)}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500}
+.badge-research{background:var(--research-bg);color:var(--research-text)}
+.badge-teaching{background:var(--teaching-bg);color:var(--teaching-text)}
+.badge-services{background:var(--services-bg);color:var(--services-text)}
+.badge-status{background:var(--surface2);color:var(--ink2)}
+.badge-done{background:#dff0e5;color:#3b6d11}
+.badge-progress{background:#ddeaf5;color:#3a5f8a}
+.badge-blocked{background:#f5e0e0;color:#b84040}
+.badge-archived{background:#e8e5de;color:#5a5a54}
+.st-mini{font-size:10px;color:var(--ink3);margin-top:1px}
+/* Archive panel */
+.archive-toggle{display:flex;align-items:center;gap:8px;margin:1.25rem 0 0.5rem;cursor:pointer;user-select:none;width:fit-content}
+.archive-toggle-label{font-size:12px;font-weight:500;color:var(--ink3);letter-spacing:0.04em;text-transform:uppercase}
+.archive-toggle-icon{font-size:11px;color:var(--ink3);transition:transform 0.2s}
+.archive-toggle-icon.open{transform:rotate(90deg)}
+.archive-section{border:1px solid var(--border2);border-radius:var(--radius-lg);overflow:hidden;background:var(--surface);margin-bottom:1rem;display:none}
+.archive-section.open{display:block}
+.archive-year-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.archive-year-title{font-family:'DM Serif Display',serif;font-size:16px;color:var(--ink2)}
+.archive-year-count{font-size:11px;color:var(--ink3);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2px 10px}
+.archive-year-body{display:none}
+.archive-year-body.open{display:block}
+.archive-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);transition:background 0.1s}
+.archive-row:last-child{border-bottom:none}
+.archive-row:hover{background:var(--surface2)}
+.archive-row-name{flex:1;font-size:13px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.archive-row-meta{font-size:11px;color:var(--ink3);white-space:nowrap}
+.archive-restore-btn{padding:3px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;color:var(--ink2);white-space:nowrap;transition:all 0.15s}
+.archive-restore-btn:hover{background:var(--paper);border-color:var(--ink)}
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(26,26,24,0.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal{background:var(--paper);border-radius:var(--radius-lg);border:1px solid var(--border2);padding:2rem;width:460px;max-width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 8px 40px rgba(26,26,24,0.2)}
+.modal h2{font-size:22px;margin-bottom:1.25rem;color:var(--ink)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:11px;font-weight:500;color:var(--ink3);margin-bottom:5px;letter-spacing:0.04em;text-transform:uppercase}
+.fg input,.fg select,.fg textarea{width:100%;border:1px solid var(--border2);border-radius:var(--radius);padding:8px 12px;font-size:13px;background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent)}
+.fg textarea{resize:vertical;min-height:50px}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fg-row .fg{margin-bottom:0}
+.modal-footer{display:flex;gap:8px;margin-top:1.25rem;justify-content:flex-end;align-items:center}
+.del-link{font-size:12px;color:#b84040;cursor:pointer;padding:4px;border:none;background:transparent;font-family:'DM Sans',sans-serif;margin-right:auto}
+.del-link:hover{text-decoration:underline}
+.cat-selector{display:flex;gap:8px}
+.cat-opt{flex:1;padding:8px 6px;border-radius:var(--radius);border:1.5px solid var(--border2);cursor:pointer;text-align:center;font-size:12px;font-weight:500;transition:all 0.15s;background:var(--paper)}
+.cat-opt:hover{border-color:var(--ink2)}
+.cat-opt.sel-research{background:var(--research-bg);border-color:var(--research-bar);color:var(--research-text)}
+.cat-opt.sel-teaching{background:var(--teaching-bg);border-color:var(--teaching-bar);color:var(--teaching-text)}
+.cat-opt.sel-services{background:var(--services-bg);border-color:var(--services-bar);color:var(--services-text)}
+/* Subtasks */
+.st-header{font-size:11px;font-weight:500;color:var(--ink3);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.st-counter{color:var(--accent);font-weight:500}
+.st-prog-wrap{height:3px;background:var(--surface2);border-radius:2px;margin-bottom:10px;overflow:hidden}
+.st-prog-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.3s}
+.st-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.st-item{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);transition:opacity 0.15s;overflow:hidden}
+.st-item.overdue-item{border-color:rgba(184,64,64,0.35);background:var(--overdue-bg)}
+.st-item.due-soon-item{border-color:rgba(193,125,60,0.35);background:var(--due-soon-bg)}
+.st-item.done-st{opacity:0.5}
+.st-top{display:flex;align-items:center;gap:8px;padding:7px 10px}
+.st-cb{width:16px;height:16px;min-width:16px;border-radius:4px;border:1.5px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;background:var(--paper);transition:all 0.15s;flex-shrink:0}
+.st-cb.chk{background:#4a7c59;border-color:#4a7c59}
+.st-cb.chk::after{content:'';display:block;width:8px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translateY(-1px)}
+.st-text{flex:1;font-size:13px;color:var(--ink);line-height:1.3}
+.st-text.done-txt{text-decoration:line-through;color:var(--ink3)}
+.st-del{background:transparent;border:none;cursor:pointer;color:var(--ink3);font-size:13px;padding:0 2px;opacity:0.5}
+.st-del:hover{opacity:1;color:#b84040}
+.st-deadline-row{display:flex;align-items:center;gap:6px;padding:0 10px 7px 34px}
+.st-deadline-lbl{font-size:11px;color:var(--ink3)}
+.st-deadline-inp{border:1px solid var(--border2);border-radius:6px;padding:3px 7px;font-size:11px;background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;width:130px}
+.st-deadline-inp:focus{border-color:var(--accent)}
+.st-deadline-tag{font-size:10px;font-weight:500;padding:2px 7px;border-radius:20px;white-space:nowrap}
+.tag-overdue{background:var(--overdue-bg);color:var(--overdue)}
+.tag-due-soon{background:var(--due-soon-bg);color:var(--due-soon)}
+.tag-upcoming{background:var(--surface2);color:var(--ink3)}
+.tag-done{background:#dff0e5;color:#3b6d11}
+.st-add-wrap{border:1px dashed var(--border2);border-radius:var(--radius);padding:8px 10px;background:transparent;transition:border-color 0.15s}
+.st-add-wrap:focus-within{border-color:var(--accent)}
+.st-add-top{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.st-add-inp{flex:1;border:none;background:transparent;font-size:13px;color:var(--ink);font-family:'DM Sans',sans-serif;outline:none}
+.st-add-inp::placeholder{color:var(--ink3)}
+.st-add-bottom{display:flex;align-items:center;gap:8px}
+.st-add-date-lbl{font-size:11px;color:var(--ink3)}
+.st-add-date{border:1px solid var(--border2);border-radius:6px;padding:3px 7px;font-size:11px;background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif;outline:none;cursor:pointer}
+.st-add-date:focus{border-color:var(--accent)}
+.st-add-btn{padding:4px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;cursor:pointer;color:var(--ink);margin-left:auto;transition:all 0.15s}
+.st-add-btn:hover{background:var(--surface)}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:var(--radius-lg);font-size:13px;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none}
+.toast.show{opacity:1}
+@media(max-width:600px){
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .gantt-wrap{overflow-x:auto}
+  .gh-label,.g-meta,.ms-label-cell{width:140px;min-width:140px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="topbar">
+  <div class="brand">
+    <h1>Joseph's Monash University <em>Indonesia</em></h1>
+    <p id="date-range-lbl">project timeline organiser</p>
+    <div class="save-indicator" id="save-indicator">● Auto-saving to browser</div>
+  </div>
+  <div class="actions">
+    <div class="pill-group">
+      <button class="pill on" onclick="setZoom('month',this)">Month</button>
+      <button class="pill" onclick="setZoom('week',this)">Week</button>
+      <button class="pill" onclick="setZoom('quarter',this)">Quarter</button>
+    </div>
+    <select id="flt-cat" onchange="render()">
+      <option value="all">All categories</option>
+      <option value="research">Research</option>
+      <option value="teaching">Teaching</option>
+      <option value="services">Services</option>
+    </select>
+    <select id="flt-status" onchange="render()">
+      <option value="all">All statuses</option>
+      <option value="todo">To do</option>
+      <option value="progress">In progress</option>
+      <option value="done">Done</option>
+      <option value="blocked">Blocked</option>
+    </select>
+    <button class="btn btn-accent" onclick="openModal(null)">+ New project</button>
+    <button class="btn" onclick="openMsModal()">+ Milestone</button>
+    <button class="btn" onclick="archiveYear()" title="Archive completed projects by year">📦 Archive year</button>
+    <button class="btn" onclick="exportData()" title="Export data as JSON">⬇ Export</button>
+    <label class="btn" style="cursor:pointer" title="Import data from JSON">⬆ Import<input type="file" accept=".json" onchange="importData(event)" style="display:none"/></label>
+    <button class="btn btn-danger" onclick="clearData()" title="Reset all data">Reset</button>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--research-bar)"></div>Research</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--teaching-bar)"></div>Teaching</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--services-bar)"></div>Services</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--overdue);border-radius:50%"></div>Overdue subtask</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#e8c040;border-radius:50%"></div>Due within 7 days</div>
+</div>
+
+<div class="stats-row" id="stats-row"></div>
+
+<div class="gantt-wrap">
+  <div class="gantt-head">
+    <div class="gh-label">Project</div>
+    <div class="gh-cols" id="gh-cols"></div>
+  </div>
+  <div class="gantt-body" id="gantt-body"></div>
+</div>
+</div>
+
+<!-- Archive panel -->
+<div class="app" style="padding-top:0;margin-top:-0.5rem">
+  <div class="archive-toggle" onclick="toggleArchivePanel()">
+    <span class="archive-toggle-icon" id="archive-icon">▶</span>
+    <span class="archive-toggle-label">Archived projects</span>
+    <span id="archive-count-badge" style="font-size:11px;color:var(--ink3);background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:2px 10px"></span>
+  </div>
+  <div class="archive-section" id="archive-section">
+    <div id="archive-body"></div>
+  </div>
+</div>
+<div class="overlay" id="proj-modal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2 id="modal-ttl">New project</h2>
+    <div class="fg"><label>Project name</label><input id="f-name" placeholder="e.g. Qualitative study on urban mobility"/></div>
+    <div class="fg">
+      <label>Category</label>
+      <div class="cat-selector">
+        <div class="cat-opt" id="co-research" onclick="selCat('research')">Research</div>
+        <div class="cat-opt" id="co-teaching" onclick="selCat('teaching')">Teaching</div>
+        <div class="cat-opt" id="co-services" onclick="selCat('services')">Services</div>
+      </div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Start date</label><input type="date" id="f-start"/></div>
+      <div class="fg"><label>End date</label><input type="date" id="f-end"/></div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Status</label>
+        <select id="f-status">
+          <option value="todo">To do</option>
+          <option value="progress">In progress</option>
+          <option value="done">Done</option>
+          <option value="blocked">Blocked</option>
+        </select>
+      </div>
+      <div class="fg"><label>Progress %</label><input type="number" id="f-pct" min="0" max="100" value="0"/></div>
+    </div>
+    <div class="fg"><label>Notes</label><textarea id="f-notes" placeholder="Optional notes…"></textarea></div>
+    <div style="margin-bottom:13px">
+      <div class="st-header"><span>Subtasks</span><span class="st-counter" id="st-counter"></span></div>
+      <div class="st-prog-wrap"><div class="st-prog-fill" id="st-prog" style="width:0%"></div></div>
+      <div class="st-list" id="st-list"></div>
+      <div class="st-add-wrap">
+        <div class="st-add-top">
+          <input class="st-add-inp" id="st-inp" placeholder="Add a subtask…" onkeydown="if(event.key==='Enter')addSt()"/>
+        </div>
+        <div class="st-add-bottom">
+          <span class="st-add-date-lbl">Deadline (optional):</span>
+          <input type="date" class="st-add-date" id="st-add-date"/>
+          <button class="st-add-btn" onclick="addSt()">+ Add subtask</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="del-link" id="del-btn" onclick="delProject()" style="display:none">Delete project</button>
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-accent" onclick="saveProject()">Save project</button>
+    </div>
+  </div>
+</div>
+
+<!-- Milestone modal -->
+<div class="overlay" id="ms-modal" style="display:none" onclick="if(event.target===this)closeMsModal()">
+  <div class="modal" style="width:300px">
+    <h2>New milestone</h2>
+    <div class="fg"><label>Name</label><input id="ms-name" placeholder="e.g. Paper submission"/></div>
+    <div class="fg"><label>Date</label><input type="date" id="ms-date"/></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeMsModal()">Cancel</button>
+      <button class="btn btn-accent" onclick="saveMilestone()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Monthly backup banner -->
+<div id="backup-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#1a1a18;color:#faf9f6;padding:14px 24px;z-index:500;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;font-family:'DM Sans',sans-serif">
+  <span style="flex:1;min-width:200px">📦 <strong>Monthly backup reminder</strong> — it's a new month! Download your data so it's safe even if your browser cache is cleared.</span>
+  <button onclick="dismissBanner(true)" style="padding:7px 18px;border-radius:8px;border:none;background:#c17d3c;color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer">⬇ Download backup now</button>
+  <button onclick="dismissBanner(false)" style="padding:7px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background:transparent;color:#faf9f6;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">Remind me later</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY='monash-planner-v1';
+const CAT={
+  research:{bar:'#3a5f8a',fill:'#a8c6e8',text:'#fff',bg:'#ddeaf5',tc:'#185fa5'},
+  teaching:{bar:'#4a7c59',fill:'#a8d4b5',text:'#fff',bg:'#dff0e5',tc:'#3b6d11'},
+  services:{bar:'#c17d3c',fill:'#e8c99a',text:'#fff',bg:'#f7eedf',tc:'#8a5010'},
+};
+const STATUS_BADGE={todo:'badge-status',progress:'badge-progress',done:'badge-done',blocked:'badge-blocked'};
+const STATUS_LABEL={todo:'To do',progress:'In progress',done:'Done',blocked:'Blocked'};
+
+function toD(s){const d=new Date(s);d.setHours(0,0,0,0);return d}
+function toS(d){return d.toISOString().slice(0,10)}
+function fmt(d,opts){return new Date(typeof d==='string'?d:toS(d)).toLocaleDateString('en-GB',opts||{day:'numeric',month:'short'})}
+const today=new Date();today.setHours(0,0,0,0);
+
+const DEFAULT_PROJECTS=[
+  {id:1,name:'Urban mobility qualitative study',cat:'research',start:'2026-02-01',end:'2026-07-31',status:'progress',pct:35,notes:'Funded by internal grant',subtasks:[
+    {id:'s1',text:'Literature review',done:true,deadline:'2026-02-28'},
+    {id:'s2',text:'Ethics application',done:true,deadline:'2026-03-10'},
+    {id:'s3',text:'Recruit participants',done:false,deadline:'2026-04-15'},
+    {id:'s4',text:'Conduct interviews',done:false,deadline:'2026-05-30'},
+    {id:'s5',text:'Data analysis',done:false,deadline:'2026-06-30'},
+    {id:'s6',text:'Draft paper',done:false,deadline:'2026-07-20'},
+  ]},
+  {id:2,name:'BUS5001 Semester 1 delivery',cat:'teaching',start:'2026-02-24',end:'2026-06-14',status:'progress',pct:40,notes:'',subtasks:[
+    {id:'s7',text:'Prepare week 1–6 slides',done:true,deadline:'2026-02-23'},
+    {id:'s8',text:'Set assignment briefs',done:true,deadline:'2026-03-01'},
+    {id:'s9',text:'Mid-semester review',done:false,deadline:'2026-04-10'},
+    {id:'s10',text:'Mark assignments',done:false,deadline:'2026-05-10'},
+    {id:'s11',text:'Final exam coordination',done:false,deadline:'2026-06-01'},
+  ]},
+  {id:3,name:'Faculty advisory committee',cat:'services',start:'2026-01-15',end:'2026-12-15',status:'progress',pct:25,notes:'Monthly meetings',subtasks:[
+    {id:'s12',text:'January meeting',done:true,deadline:'2026-01-28'},
+    {id:'s13',text:'February meeting',done:true,deadline:'2026-02-25'},
+    {id:'s14',text:'March meeting',done:false,deadline:'2026-03-25'},
+    {id:'s15',text:'Mid-year report',done:false,deadline:'2026-06-30'},
+  ]},
+  {id:4,name:'Journal article: green finance',cat:'research',start:'2026-03-01',end:'2026-09-30',status:'todo',pct:0,notes:'Target: Q1 finance journal',subtasks:[
+    {id:'s16',text:'Outline & framing',done:false,deadline:'2026-04-01'},
+    {id:'s17',text:'Data collection',done:false,deadline:'2026-05-15'},
+    {id:'s18',text:'Write draft',done:false,deadline:'2026-07-31'},
+    {id:'s19',text:'Peer review & revise',done:false,deadline:'2026-09-15'},
+  ]},
+  {id:5,name:'Curriculum redesign – MBA',cat:'teaching',start:'2026-05-01',end:'2026-08-31',status:'todo',pct:0,notes:'',subtasks:[
+    {id:'s20',text:'Benchmarking review',done:false,deadline:'2026-05-31'},
+    {id:'s21',text:'Stakeholder consultation',done:false,deadline:'2026-06-30'},
+    {id:'s22',text:'Draft new curriculum',done:false,deadline:'2026-08-15'},
+  ]},
+  {id:6,name:'Community partnership — Surabaya',cat:'services',start:'2026-04-01',end:'2026-11-30',status:'todo',pct:0,notes:'',subtasks:[
+    {id:'s23',text:'Initial MOU',done:false,deadline:'2026-04-20'},
+    {id:'s24',text:'Site visit',done:false,deadline:'2026-05-15'},
+    {id:'s25',text:'Programme design',done:false,deadline:'2026-07-31'},
+    {id:'s26',text:'Delivery & evaluation',done:false,deadline:'2026-11-01'},
+  ]},
+];
+const DEFAULT_MILESTONES=[
+  {id:'m1',name:'Ethics approval',date:'2026-04-15'},
+  {id:'m2',name:'Paper submission',date:'2026-09-15'},
+  {id:'m3',name:'Semester 1 ends',date:'2026-06-14'},
+];
+
+function loadData(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(raw){const d=JSON.parse(raw);return{projects:d.projects||DEFAULT_PROJECTS,milestones:d.milestones||DEFAULT_MILESTONES,nextId:d.nextId||50,nextSt:d.nextSt||200};}
+  }catch(e){}
+  return{projects:JSON.parse(JSON.stringify(DEFAULT_PROJECTS)),milestones:JSON.parse(JSON.stringify(DEFAULT_MILESTONES)),nextId:50,nextSt:200};
+}
+function saveData(){
+  try{
+    localStorage.setItem(STORAGE_KEY,JSON.stringify({projects,milestones,nextId,nextSt}));
+    const ind=document.getElementById('save-indicator');
+    ind.textContent='● Saved';ind.classList.add('saved');
+    setTimeout(()=>{ind.textContent='● Auto-saving to browser';ind.classList.remove('saved');},1500);
+  }catch(e){}
+}
+function clearData(){
+  if(!confirm('Reset all projects to default? This cannot be undone.'))return;
+  localStorage.removeItem(STORAGE_KEY);
+  const d=loadData();projects=d.projects;milestones=d.milestones;nextId=d.nextId;nextSt=d.nextSt;
+  render();showToast('Data reset to defaults');
+}
+function showToast(msg,duration){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),duration||2500);}
+
+// Monthly auto-backup
+const BACKUP_KEY='monash-planner-last-backup';
+function checkMonthlyBackup(){
+  const now=new Date();
+  const currentMonth=`${now.getFullYear()}-${now.getMonth()+1}`;
+  const lastBackup=localStorage.getItem(BACKUP_KEY)||'';
+  if(lastBackup!==currentMonth){
+    // Show banner after short delay so page loads first
+    setTimeout(()=>showBackupBanner(currentMonth),800);
+  }
+}
+function showBackupBanner(month){
+  const banner=document.getElementById('backup-banner');
+  if(banner)banner.style.display='flex';
+}
+function dismissBanner(doBackup){
+  const banner=document.getElementById('backup-banner');
+  if(banner)banner.style.display='none';
+  if(doBackup){
+    const now=new Date();
+    const currentMonth=`${now.getFullYear()}-${now.getMonth()+1}`;
+    localStorage.setItem(BACKUP_KEY,currentMonth);
+    exportData();
+  } else {
+    // snooze — remind again next visit this month
+  }
+}
+function exportData(){
+  const payload={projects,milestones,nextId,nextSt,exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  const now=new Date();
+  const month=now.toLocaleString('en-GB',{month:'short',year:'numeric'}).replace(' ','-');
+  a.download=`monash-planner-${month}.json`;
+  a.click();URL.revokeObjectURL(url);
+  // Mark this month as backed up
+  const currentMonth=`${now.getFullYear()}-${now.getMonth()+1}`;
+  localStorage.setItem(BACKUP_KEY,currentMonth);
+  const banner=document.getElementById('backup-banner');
+  if(banner)banner.style.display='none';
+  showToast('Backup downloaded — save it to a safe folder!',3500);
+}
+function importData(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(!d.projects||!Array.isArray(d.projects))throw new Error('Invalid file');
+      if(!confirm(`Import ${d.projects.length} projects and ${(d.milestones||[]).length} milestones? This will replace your current data.`)){e.target.value='';return;}
+      projects=d.projects;milestones=d.milestones||[];nextId=d.nextId||50;nextSt=d.nextSt||200;
+      saveData();render();showToast('Data imported successfully');
+    }catch(err){alert('Could not read file. Make sure it is a valid Monash Planner backup.');}
+    e.target.value='';
+  };
+  reader.readAsText(file);
+}
+const loaded=loadData();
+let projects=loaded.projects,milestones=loaded.milestones,nextId=loaded.nextId,nextSt=loaded.nextSt;
+let editId=null,editSts=[],selCatVal='research',zoom='month';
+
+function deadlineStatus(deadline,done){
+  if(!deadline)return null;if(done)return'done';
+  const diff=Math.round((toD(deadline)-today)/864e5);
+  if(diff<0)return'overdue';if(diff<=7)return'due-soon';return'upcoming';
+}
+function deadlineTag(deadline,done){
+  const s=deadlineStatus(deadline,done);if(!s)return'';
+  if(s==='done')return`<span class="st-deadline-tag tag-done">Done</span>`;
+  if(s==='overdue'){const diff=Math.round((today-toD(deadline))/864e5);return`<span class="st-deadline-tag tag-overdue">${diff}d overdue</span>`;}
+  if(s==='due-soon'){const diff=Math.round((toD(deadline)-today)/864e5);return`<span class="st-deadline-tag tag-due-soon">${diff===0?'Due today':'Due in '+diff+'d'}</span>`;}
+  return`<span class="st-deadline-tag tag-upcoming">${fmt(deadline)}</span>`;
+}
+function stProg(sts){if(!sts||!sts.length)return null;const d=sts.filter(s=>s.done).length;return{done:d,total:sts.length,pct:Math.round(d/sts.length*100)};}
+function countOverdue(sts){return(sts||[]).filter(s=>!s.done&&s.deadline&&deadlineStatus(s.deadline,false)==='overdue').length;}
+
+function setZoom(z,el){zoom=z;document.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));el.classList.add('on');render();}
+
+function getRange(){
+  const all=[...projects.map(p=>toD(p.start)),...projects.map(p=>toD(p.end)),...milestones.map(m=>toD(m.date))];
+  if(!all.length)return{min:new Date(today),max:new Date(today.getTime()+90*864e5)};
+  let mn=new Date(Math.min(...all)),mx=new Date(Math.max(...all));
+  mn.setDate(mn.getDate()-5);mx.setDate(mx.getDate()+10);return{min:mn,max:mx};
+}
+function buildCols(min,max){
+  const cols=[];const c=new Date(min);
+  if(zoom==='week'){while(c<=max){cols.push({label:fmt(c,{day:'numeric',month:'short'}),date:new Date(c)});c.setDate(c.getDate()+7);}}
+  else if(zoom==='month'){c.setDate(1);while(c<=max){cols.push({label:c.toLocaleDateString('en-GB',{month:'short',year:'2-digit'}),date:new Date(c)});c.setMonth(c.getMonth()+1);}}
+  else{c.setDate(1);c.setMonth(Math.floor(c.getMonth()/3)*3);while(c<=max){const q=Math.floor(c.getMonth()/3)+1;cols.push({label:`Q${q} '${c.getFullYear().toString().slice(2)}`,date:new Date(c)});c.setMonth(c.getMonth()+3);}}
+  return cols;
+}
+function pct(date,min,span){const d=typeof date==='string'?toD(date):date;return Math.max(0,Math.min(100,((d-min)/span)*100));}
+
+function renderStats(){
+  const active=projects.filter(p=>!p.archived);
+  const tot=active.length,r=active.filter(p=>p.cat==='research').length,t=active.filter(p=>p.cat==='teaching').length,s=tot-r-t;
+  const totSt=active.reduce((a,p)=>a+(p.subtasks||[]).length,0);
+  const doneSt=active.reduce((a,p)=>a+(p.subtasks||[]).filter(x=>x.done).length,0);
+  const totalOverdue=active.reduce((a,p)=>a+countOverdue(p.subtasks),0);
+
+  // Build SVG pie chart
+  function makePie(slices,size){
+    if(slices.every(s=>s.val===0))return`<circle cx="${size/2}" cy="${size/2}" r="${size/2-2}" fill="#e8e5de"/>`;
+    let total=slices.reduce((a,s)=>a+s.val,0);
+    let angle=-Math.PI/2;let paths='';
+    slices.forEach(sl=>{
+      if(sl.val===0)return;
+      const sweep=2*Math.PI*(sl.val/total);
+      const r=size/2-2,cx=size/2,cy=size/2;
+      const x1=cx+r*Math.cos(angle),y1=cy+r*Math.sin(angle);
+      const x2=cx+r*Math.cos(angle+sweep),y2=cy+r*Math.sin(angle+sweep);
+      const large=sweep>Math.PI?1:0;
+      if(total===sl.val){
+        paths+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${sl.color}"/>`;
+      } else {
+        paths+=`<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z" fill="${sl.color}"/>`;
+      }
+      angle+=sweep;
+    });
+    return paths;
+  }
+
+  const slices=[
+    {val:r,color:'#3a5f8a',label:'Research'},
+    {val:t,color:'#4a7c59',label:'Teaching'},
+    {val:s,color:'#c17d3c',label:'Services'},
+  ];
+  const pieSize=72;
+  const pieSvg=`<svg width="${pieSize}" height="${pieSize}" viewBox="0 0 ${pieSize} ${pieSize}" style="border-radius:50%">${makePie(slices,pieSize)}</svg>`;
+
+  const pieCard=`<div class="stat stat-pie" style="background:var(--surface)">
+    ${pieSvg}
+    <div class="pie-legend">
+      ${slices.map(sl=>`<div class="pie-legend-item"><div class="pie-legend-dot" style="background:${sl.color}"></div><span>${sl.label}: <strong>${sl.val}</strong></span></div>`).join('')}
+    </div>
+  </div>`;
+
+  const otherCards=[
+    {n:tot,l:'Total projects',fill:'#1a1a18',bg:'var(--surface)',col:'var(--ink)',v:100},
+    {n:`${doneSt}/${totSt}`,l:'Subtasks done',fill:'#4a7c59',bg:'var(--teaching-bg)',col:'var(--teaching-text)',v:totSt?Math.round(doneSt/totSt*100):0},
+    {n:totalOverdue,l:'Overdue subtasks',fill:'#b84040',bg:totalOverdue?'var(--overdue-bg)':'var(--surface)',col:totalOverdue?'var(--overdue)':'var(--ink)',v:100},
+  ].map(d=>`<div class="stat" style="background:${d.bg}"><div class="stat-num" style="color:${d.col}">${d.n}</div><div class="stat-lbl">${d.l}</div><div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:${d.v}%;background:${d.fill}"></div></div></div>`).join('');
+
+  document.getElementById('stats-row').innerHTML=otherCards.split('</div>').slice(0,1).join('</div>')+'</div>'+pieCard+otherCards.split('</div>').slice(1).join('</div>');
+
+  // rebuild properly — insert pie as 2nd card
+  const cards=otherCards.match(/<div class="stat"[\s\S]*?<\/div><\/div><\/div>/g)||[];
+  // simpler: just build array
+  const c0=`<div class="stat" style="background:var(--surface)"><div class="stat-num" style="color:var(--ink)">${tot}</div><div class="stat-lbl">Total projects</div><div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:100%;background:#1a1a18"></div></div></div>`;
+  const c2=`<div class="stat" style="background:var(--teaching-bg)"><div class="stat-num" style="color:var(--teaching-text)">${doneSt}/${totSt}</div><div class="stat-lbl">Subtasks done</div><div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:${totSt?Math.round(doneSt/totSt*100):0}%;background:#4a7c59"></div></div></div>`;
+  const c3=`<div class="stat" style="background:${totalOverdue?'var(--overdue-bg)':'var(--surface)'}"><div class="stat-num" style="color:${totalOverdue?'var(--overdue)':'var(--ink)'}">${totalOverdue}</div><div class="stat-lbl">Overdue subtasks</div><div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:100%;background:#b84040"></div></div></div>`;
+  document.getElementById('stats-row').innerHTML=c0+pieCard+c2+c3;
+}
+
+function render(){
+  renderStats();
+  const fc=document.getElementById('flt-cat').value,fs=document.getElementById('flt-status').value;
+  const shown=projects.filter(p=>!p.archived&&(fc==='all'||p.cat===fc)&&(fs==='all'||p.status===fs));
+  const {min,max}=getRange();const span=max-min;const cols=buildCols(min,max);
+  document.getElementById('date-range-lbl').textContent=fmt(min)+' – '+fmt(max);
+  const tp=pct(today,min,span);
+  document.getElementById('gh-cols').innerHTML=cols.map(c=>{const cp=pct(c.date,min,span);const near=Math.abs(cp-tp)<(zoom==='month'?5:zoom==='week'?8:3);return`<div class="gh-col${near?' today-col':''}">${c.label}</div>`;}).join('');
+  if(!shown.length){document.getElementById('gantt-body').innerHTML='<div class="empty-state"><h3>No projects here</h3><p>Click "+ New project" to get started.</p></div>';return;}
+  const cellBgs=cols.map((c,i)=>{const l=pct(c.date,min,span);const nxt=cols[i+1]?cols[i+1].date:max;const w=pct(nxt,min,span)-l;return`<div class="g-cell-bg" style="left:${l}%;width:${w}%"></div>`;}).join('');
+  const todayLine=tp>=0&&tp<=100?`<div class="today-stripe" style="left:${tp}%"></div><div class="today-cap" style="left:${tp}%">TODAY</div>`:'';
+  let html=shown.map(p=>{
+    const c=CAT[p.cat];const s=pct(p.start,min,span),e=pct(p.end,min,span);const w=Math.max(0.5,e-s);
+    const barTxt=w>8?`<span class="g-bar-text" style="color:${c.text}">${p.name}</span>`:'';
+    const sp=stProg(p.subtasks);const ov=countOverdue(p.subtasks);
+    const stMini=sp?`<div class="st-mini">${sp.done}/${sp.total} subtasks${ov?` · <span style="color:var(--overdue)">${ov} overdue</span>`:'  · '+sp.pct+'%'}</div>`:'';
+    return`<div class="g-row" onclick="openModal(${p.id})">
+      <div class="g-meta">
+        <div class="g-name">${p.name}</div>
+        <div class="g-sub"><span class="badge badge-${p.cat}">${p.cat.charAt(0).toUpperCase()+p.cat.slice(1)}</span><span class="badge ${STATUS_BADGE[p.status]}">${STATUS_LABEL[p.status]}</span></div>
+        ${stMini}
+      </div>
+      <div class="g-cells">
+        ${cellBgs}${todayLine}
+        <div class="g-bar" style="left:${s}%;width:${w}%;background:${c.bar}" title="${p.name}">
+          <div class="g-bar-fill" style="width:${p.pct}%;background:${c.fill}"></div>
+          ${barTxt}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  if(milestones.length){
+    const mm=milestones.map(m=>{const mp=pct(m.date,min,span);return`<div class="ms-diamond" style="left:calc(${mp}% - 5px);background:#1a1a18" title="${m.name}"></div><div class="ms-label" style="left:${mp}%;color:var(--ink2)">${m.name}</div>`;}).join('');
+    html+=`<div class="ms-row"><div class="ms-label-cell">Milestones</div><div class="g-cells" style="position:relative">${mm}</div></div>`;
+  }
+  document.getElementById('gantt-body').innerHTML=html;
+}
+
+function renderSts(){
+  const sp=stProg(editSts);
+  document.getElementById('st-counter').textContent=sp?`${sp.done}/${sp.total} done`:'';
+  document.getElementById('st-prog').style.width=sp?sp.pct+'%':'0%';
+  document.getElementById('st-list').innerHTML=editSts.map((s,i)=>{
+    const ds=deadlineStatus(s.deadline,s.done);
+    let cls='st-item';if(ds==='overdue')cls+=' overdue-item';else if(ds==='due-soon')cls+=' due-soon-item';if(s.done)cls+=' done-st';
+    return`<div class="${cls}">
+      <div class="st-top">
+        <div class="st-cb${s.done?' chk':''}" onclick="toggleSt(${i})"></div>
+        <span class="st-text${s.done?' done-txt':''}">${s.text}</span>
+        <button class="st-del" onclick="delSt(${i})">✕</button>
+      </div>
+      <div class="st-deadline-row">
+        <span class="st-deadline-lbl">Deadline:</span>
+        <input type="date" class="st-deadline-inp" value="${s.deadline||''}" onchange="updateDeadline(${i},this.value)" ${s.done?'disabled':''}/>
+        ${s.deadline?deadlineTag(s.deadline,s.done):''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleSt(i){editSts[i].done=!editSts[i].done;renderSts();}
+function delSt(i){editSts.splice(i,1);renderSts();}
+function updateDeadline(i,v){editSts[i].deadline=v||null;renderSts();}
+function addSt(){
+  const inp=document.getElementById('st-inp');const t=inp.value.trim();if(!t)return;
+  const d=document.getElementById('st-add-date').value||null;
+  editSts.push({id:'st'+(nextSt++),text:t,done:false,deadline:d});
+  inp.value='';document.getElementById('st-add-date').value='';renderSts();inp.focus();
+}
+function selCat(v){
+  selCatVal=v;
+  ['research','teaching','services'].forEach(c=>{document.getElementById('co-'+c).className='cat-opt'+(c===v?' sel-'+c:'');});
+}
+function openModal(id){
+  editId=id;const p=id?projects.find(x=>x.id===id):null;
+  document.getElementById('modal-ttl').textContent=p?'Edit project':'New project';
+  document.getElementById('f-name').value=p?p.name:'';
+  document.getElementById('f-start').value=p?p.start:toS(today);
+  document.getElementById('f-end').value=p?p.end:toS(new Date(today.getTime()+30*864e5));
+  document.getElementById('f-status').value=p?p.status:'todo';
+  document.getElementById('f-pct').value=p?p.pct:0;
+  document.getElementById('f-notes').value=p?p.notes:'';
+  selCat(p?p.cat:'research');
+  editSts=p?(p.subtasks||[]).map(s=>({...s})):[];
+  renderSts();
+  document.getElementById('del-btn').style.display=id?'':'none';
+  document.getElementById('proj-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('f-name').focus(),50);
+}
+function closeModal(){document.getElementById('proj-modal').style.display='none';}
+function saveProject(){
+  const name=document.getElementById('f-name').value.trim();if(!name)return;
+  let pctVal=parseInt(document.getElementById('f-pct').value)||0;
+  if(editSts.length){const sp=stProg(editSts);pctVal=sp.pct;}
+  const obj={id:editId||nextId++,name,cat:selCatVal,start:document.getElementById('f-start').value,end:document.getElementById('f-end').value,status:document.getElementById('f-status').value,pct:pctVal,notes:document.getElementById('f-notes').value.trim(),subtasks:editSts.map(s=>({...s}))};
+  if(editId){const i=projects.findIndex(p=>p.id===editId);projects[i]=obj;}else projects.push(obj);
+  saveData();closeModal();render();showToast(editId?'Project updated':'Project added');
+}
+function delProject(){
+  if(!editId)return;
+  if(!confirm('Delete this project?'))return;
+  projects=projects.filter(p=>p.id!==editId);
+  saveData();closeModal();render();showToast('Project deleted');
+}
+function openMsModal(){document.getElementById('ms-name').value='';document.getElementById('ms-date').value=toS(today);document.getElementById('ms-modal').style.display='flex';setTimeout(()=>document.getElementById('ms-name').focus(),50);}
+function closeMsModal(){document.getElementById('ms-modal').style.display='none';}
+function saveMilestone(){
+  const n=document.getElementById('ms-name').value.trim();const d=document.getElementById('ms-date').value;if(!n||!d)return;
+  milestones.push({id:'m'+Date.now(),name:n,date:d});
+  saveData();closeMsModal();render();showToast('Milestone added');
+}
+
+function exportData(){
+  const payload={projects,milestones,nextId,nextSt,exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  const date=new Date().toISOString().slice(0,10);
+  a.download=`monash-planner-backup-${date}.json`;
+  a.click();URL.revokeObjectURL(url);
+  showToast('Data exported successfully');
+}
+function importData(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(!d.projects||!Array.isArray(d.projects))throw new Error('Invalid file');
+      if(!confirm(`Import ${d.projects.length} projects and ${(d.milestones||[]).length} milestones? This will replace your current data.`)){e.target.value='';return;}
+      projects=d.projects;
+      milestones=d.milestones||[];
+      nextId=d.nextId||50;
+      nextSt=d.nextSt||200;
+      saveData();render();
+      showToast('Data imported successfully');
+    }catch(err){
+      alert('Could not read file. Make sure it is a valid Monash Planner backup.');
+    }
+    e.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+function archiveYear(){
+  const yr=new Date().getFullYear();
+  const toArchive=projects.filter(p=>p.status==='done'&&!p.archived);
+  if(!toArchive.length){showToast('No completed projects to archive');return;}
+  if(!confirm(`Archive ${toArchive.length} completed project(s) into ${yr}? They will be hidden from the main timeline but always accessible below.`))return;
+  projects=projects.map(p=>p.status==='done'&&!p.archived?{...p,archived:true,archivedYear:yr}:p);
+  saveData();render();renderArchive();showToast(`${toArchive.length} project(s) archived under ${yr}`);
+}
+function restoreProject(id){
+  projects=projects.map(p=>p.id===id?{...p,archived:false,archivedYear:null}:p);
+  saveData();render();renderArchive();showToast('Project restored to timeline');
+}
+function toggleArchivePanel(){
+  const section=document.getElementById('archive-section');
+  const icon=document.getElementById('archive-icon');
+  const open=section.classList.toggle('open');
+  icon.classList.toggle('open',open);
+  if(open)renderArchive();
+}
+function renderArchive(){
+  const archived=projects.filter(p=>p.archived);
+  const badge=document.getElementById('archive-count-badge');
+  badge.textContent=archived.length?`${archived.length} project${archived.length>1?'s':''}`:' ';
+  if(!archived.length){
+    document.getElementById('archive-body').innerHTML='<div style="padding:2rem;text-align:center;color:var(--ink3);font-size:13px">No archived projects yet. Use "📦 Archive year" to archive completed projects.</div>';
+    return;
+  }
+  const byYear={};
+  archived.forEach(p=>{const y=p.archivedYear||'Unknown';if(!byYear[y])byYear[y]=[];byYear[y].push(p);});
+  const years=Object.keys(byYear).sort((a,b)=>b-a);
+  document.getElementById('archive-body').innerHTML=years.map(yr=>{
+    const ps=byYear[yr];
+    const r=ps.filter(p=>p.cat==='research').length,t=ps.filter(p=>p.cat==='teaching').length,s=ps.filter(p=>p.cat==='services').length;
+    return`<div class="archive-year-header" onclick="toggleArchiveYear('ay-${yr}')">
+      <span class="archive-year-title">${yr}</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        ${r?`<span style="font-size:11px;color:var(--research-text);background:var(--research-bg);padding:2px 8px;border-radius:20px">${r}R</span>`:''}
+        ${t?`<span style="font-size:11px;color:var(--teaching-text);background:var(--teaching-bg);padding:2px 8px;border-radius:20px">${t}T</span>`:''}
+        ${s?`<span style="font-size:11px;color:var(--services-text);background:var(--services-bg);padding:2px 8px;border-radius:20px">${s}S</span>`:''}
+        <span class="archive-year-count">${ps.length} project${ps.length>1?'s':''}</span>
+      </div>
+    </div>
+    <div class="archive-year-body open" id="ay-${yr}">
+      ${ps.map(p=>{
+        const sp=stProg(p.subtasks);const catC=CAT[p.cat];
+        return`<div class="archive-row">
+          <div style="width:10px;height:10px;border-radius:2px;background:${catC.bar};flex-shrink:0"></div>
+          <div class="archive-row-name" title="${p.name}">${p.name}</div>
+          <div class="archive-row-meta">${fmt(p.start,{month:'short',year:'numeric'})} – ${fmt(p.end,{month:'short',year:'numeric'})}</div>
+          ${sp?`<div class="archive-row-meta">${sp.done}/${sp.total} subtasks</div>`:''}
+          <button class="archive-restore-btn" onclick="restoreProject(${p.id})">Restore</button>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+function toggleArchiveYear(id){const el=document.getElementById(id);if(el)el.classList.toggle('open');}
+
+render();
+checkMonthlyBackup();
+renderArchive();
+</script>
+</body>
+</html>
