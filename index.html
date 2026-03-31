@@ -929,14 +929,21 @@ async function performGistSave(token,gistId){
 }
 
 async function performGistLoad(token,gistId){
-  if(!gistId){
-    showToast('No Gist found — save first to create one.');
-    openGistModal('load');
-    return;
-  }
   const ind=document.getElementById('save-indicator');
   ind.textContent='● Loading from Gist…';
   try{
+    // If no gistId stored, search all gists for the planner file
+    if(!gistId){
+      showToast('No Gist ID found — searching your Gists…',3000);
+      const listRes=await fetch('https://api.github.com/gists',{headers:{'Authorization':`token ${token}`}});
+      if(!listRes.ok){const err=await listRes.json();throw new Error(err.message||'GitHub API error');}
+      const gists=await listRes.json();
+      const found=gists.find(g=>g.files&&g.files[GIST_FILENAME]);
+      if(!found)throw new Error('No Monash Planner Gist found. Please Save to Gist from your primary device first.');
+      gistId=found.id;
+      localStorage.setItem(GIST_ID_KEY,gistId);
+      showToast('Gist found! Loading data…',2000);
+    }
     const res=await fetch(`https://api.github.com/gists/${gistId}`,{headers:{'Authorization':`token ${token}`}});
     if(!res.ok){const err=await res.json();throw new Error(err.message||'GitHub API error');}
     const data=await res.json();
@@ -953,7 +960,7 @@ async function performGistLoad(token,gistId){
     showToast('Loaded from GitHub Gist successfully!',3000);
   }catch(err){
     ind.textContent='● Auto-saving to browser';ind.classList.remove('saved');
-    alert(`Gist load failed: ${err.message}\n\nCheck your token and try again.`);
+    alert(`Gist load failed: ${err.message}\n\nMake sure you have saved from your primary device first.`);
   }
 }
 
