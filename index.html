@@ -91,6 +91,29 @@ select{border:1px solid var(--border2);border-radius:var(--radius);padding:6px 1
 .badge-blocked{background:#f5e0e0;color:#b84040}
 .badge-archived{background:#e8e5de;color:#5a5a54}
 .st-mini{font-size:10px;color:var(--ink3);margin-top:1px}
+/* Due-soon spotlight panel */
+.due-panel{border:1px solid rgba(193,125,60,0.35);border-radius:var(--radius-lg);background:var(--due-soon-bg);margin-bottom:1.25rem;overflow:hidden}
+.due-panel-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid rgba(193,125,60,0.2);gap:10px;flex-wrap:wrap}
+.due-panel-title{font-size:12px;font-weight:500;color:var(--due-soon);letter-spacing:0.05em;text-transform:uppercase;display:flex;align-items:center;gap:7px}
+.due-pulse{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:dpulse 2s ease-in-out infinite}
+@keyframes dpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.75)}}
+.due-panel-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.due-panel-lbl{font-size:11px;color:var(--ink3)}
+.due-panel-inp{width:50px;border:1px solid rgba(193,125,60,0.4);border-radius:6px;padding:3px 7px;font-size:11px;background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif;outline:none;text-align:center}
+.due-panel-inp:focus{border-color:var(--accent)}
+.due-panel-toggle{font-size:11px;color:var(--ink3);cursor:pointer;padding:3px 10px;border:1px solid var(--border2);border-radius:6px;background:transparent;font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.due-panel-toggle:hover{background:var(--surface);border-color:var(--ink2)}
+.due-panel-body{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px}
+.due-card{background:var(--paper);border:1px solid rgba(193,125,60,0.22);border-radius:var(--radius);padding:9px 12px;min-width:200px;flex:1;cursor:pointer;transition:border-color 0.15s,background 0.15s}
+.due-card:hover{border-color:rgba(193,125,60,0.6);background:rgba(193,125,60,0.03)}
+.due-card-proj{font-size:10px;font-weight:500;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:7px;display:flex;align-items:center;gap:5px;color:var(--ink2)}
+.due-card-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+.due-task-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid rgba(193,125,60,0.1)}
+.due-task-row:last-child{border-bottom:none}
+.due-task-name{font-size:12px;color:var(--ink);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.due-chip{font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.chip-today{background:#fde68a;color:#92400e}
+.chip-soon{background:var(--due-soon-bg);color:var(--due-soon);border:1px solid rgba(122,96,32,0.2)}
 .drag-handle{display:flex;align-items:center;justify-content:center;width:18px;min-width:18px;cursor:grab;color:var(--ink3);font-size:12px;opacity:0.4;transition:opacity 0.15s;user-select:none}
 .drag-handle:hover{opacity:1}
 .g-row.drag-over{border-top:2px solid var(--accent);background:rgba(193,125,60,0.08)}
@@ -236,6 +259,9 @@ select{border:1px solid var(--border2);border-radius:var(--radius);padding:6px 1
 </div>
 
 <div class="stats-row" id="stats-row"></div>
+
+<!-- Due-soon spotlight panel (auto-hidden when nothing qualifies) -->
+<div id="due-panel"></div>
 
 <div class="gantt-wrap">
   <div class="gantt-head">
@@ -495,6 +521,55 @@ function importData(e){
 const loaded=loadData();
 let projects=loaded.projects,milestones=loaded.milestones,nextId=loaded.nextId,nextSt=loaded.nextSt;
 let editId=null,editSts=[],selCatVal='research',zoom='month';
+let dueDays=3,duePanelCollapsed=false;
+
+/* ── Due-soon spotlight panel ── */
+function renderDuePanel(){
+  const wrap=document.getElementById('due-panel');if(!wrap)return;
+  const hits=[];
+  projects.filter(p=>!p.archived).forEach(p=>{
+    (p.subtasks||[]).forEach(s=>{
+      if(s.done||!s.deadline)return;
+      const diff=Math.round((toD(s.deadline)-today)/864e5);
+      if(diff>=0&&diff<=dueDays)hits.push({proj:p,task:s,diff});
+    });
+  });
+  if(hits.length===0){wrap.innerHTML='';return;}
+  const byProj={};
+  hits.forEach(h=>{
+    if(!byProj[h.proj.id])byProj[h.proj.id]={proj:h.proj,tasks:[]};
+    byProj[h.proj.id].tasks.push({task:h.task,diff:h.diff});
+  });
+  const groups=Object.values(byProj);
+  const total=hits.length;
+  const titleTxt=`${total} subtask${total!==1?'s':''} due within ${dueDays} day${dueDays!==1?'s':''}`;
+  const bodyHtml=duePanelCollapsed?'':`<div class="due-panel-body">${
+    groups.map(g=>{
+      const c=CAT[g.proj.cat];
+      const rows=g.tasks.sort((a,b)=>a.diff-b.diff).map(({task,diff})=>`<div class="due-task-row">
+        <span class="due-task-name" title="${task.text}">${task.text}</span>
+        <span class="due-chip ${diff===0?'chip-today':'chip-soon'}">${diff===0?'Due today':'In '+diff+'d'}</span>
+      </div>`).join('');
+      return`<div class="due-card" onclick="openModal(${g.proj.id})">
+        <div class="due-card-proj"><div class="due-card-dot" style="background:${c.bar}"></div>${g.proj.name}</div>
+        ${rows}
+      </div>`;
+    }).join('')
+  }</div>`;
+  wrap.innerHTML=`<div class="due-panel">
+    <div class="due-panel-head">
+      <div class="due-panel-title"><div class="due-pulse"></div>${titleTxt}</div>
+      <div class="due-panel-controls">
+        <span class="due-panel-lbl">Show tasks due within</span>
+        <input class="due-panel-inp" type="number" min="1" max="30" value="${dueDays}"
+          onchange="dueDays=Math.max(1,Math.min(30,parseInt(this.value)||3));renderDuePanel()"/>
+        <span class="due-panel-lbl">days</span>
+        <button class="due-panel-toggle" onclick="duePanelCollapsed=!duePanelCollapsed;renderDuePanel()">${duePanelCollapsed?'Show':'Hide'}</button>
+      </div>
+    </div>
+    ${bodyHtml}
+  </div>`;
+}
 
 function deadlineStatus(deadline,done){
   if(!deadline)return null;if(done)return'done';
@@ -591,6 +666,7 @@ function renderStats(){
 
 function render(){
   renderStats();
+  renderDuePanel();
   const fc=document.getElementById('flt-cat').value,fs=document.getElementById('flt-status').value;
   const sortBy=document.getElementById('sort-by').value;
   let shown=projects.filter(p=>!p.archived&&(fc==='all'||p.cat===fc)&&(fs==='all'||p.status===fs));
